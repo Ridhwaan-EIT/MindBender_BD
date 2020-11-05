@@ -1,111 +1,105 @@
 #!/bin/bash
 
-## How to install Hadoop 2.7.3
+#Go to the Home Directory
+cd ~
 
-## Update file
-sudo apt update
+sudo apt-get update 
 
-## Create new directory
-mkdir opt
+#Install and setup SSH key
+sudo apt-get install openssh-server
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
 
-## Go in opt
+#create the opt 
+mkdir -p opt
 cd opt
 
-## Download Hadoop
-wget http://apache.mirrors.hoobly.com/hadoop/common/current/hadoop-2.7.3.tar.gz
+#Download and then unpack
+sudo wget http://archive.apache.org/dist/hadoop/common/hadoop-2.7.3/hadoop-2.7.3.tar.gz
+tar -xzf hadoop-2.7.3.tar.gz
+sudo rm hadoop-2.7.3.tar.gz
 
-## Unzip the file
-tar -zxvf hadoop-2.7.3.tar.gz
+#setup the.Bash_Profile paths; if statment used to check the condition 
+cd ~
+if [ ! -f ".bash_profile" ]; then
+	touch .bash_profile
+fi
 
-## Open txt file of bash profile
-sudo gedit .bash_profile.sh
-
-## Set up Hadoop Home
-echo "export HADOOP_HOME=/home/fieldemployee/opt/hadoop-2.7.3" >> .bash_profile.sh
-echo "export HADOOP_INSTALL=$HADOOP_HOME" >> .bash_profile.sh
-echo "export HADOOP_MAPRED_HOME=$HADOOP_HOME" >> .bash_profile.sh
-echo "export HADOOP_COMMON_HOME=$HADOOP_HOME" >> .bash_profile.sh
-echo "export HADOOP_HDFS_HOME=$HADOOP_HOME" >> .bash_profile.sh
-echo "export YARN_HOME=$HADOOP_HOME" >> .bash_profile.sh
-echo "export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native" >> .bash_profile.sh
-echo "export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin" >> .bash_profile.sh
-
-##Source bash profile
-source .bash_profile.sh
-
-## Set up the Hadoop Configuration files
-cd hadoop/etc/hadoop
-
-## Edit hadoop-env.sh
-sudo gedit hadoop-env.sh
-echo "export JAVA_HOME=/usr/lib/jvm/java-11-oracle" >> hadoop-env.sh
-
-## Edit core-site.xml
-sudo gedit core-site.xml
-echo "<configuration>
-<property>
-  <name>fs.default.name</name>
-    <value>hdfs://localhost:9000</value>
-</property>
-</configuration>" >> core-site.xml
+echo export HADOOP_HOME=~/opt/hadoop-2.7.3 >> .bash_profile
+echo export HADOOP_INSTALL=$HADOOP_HOME >> .bash_profile
+echo export HADOOP_MAPRED_HOME=$HADOOP_HOME >> .bash_profile
+echo export HADOOP_COMMON_HOME=$HADOOP_HOME >> .bash_profile
+echo export HADOOP_HDFS_HOME=$HADOOP_HOME >> .bash_profile
+echo export YARN_HOME=$HADOOP_HOME >> .bash_profile
+echo export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native >> .bash_profile
+echo export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin >> .bash_profile
 
 
+# Setup Config Files
+cd ~/opt/hadoop-2.7.3/etc/hadoop
 
-## Edit hdfs-site.xml
-sudo gedit hdfs-site.xml
-echo "<configuration>
-<property>
- <name>dfs.replication</name>
- <value>1</value>
-</property>
-<property>
-  <name>dfs.name.dir</name>
-    <value>file:///home/fieldemployee/opt/hadoop-2.7.3/hdfs/namenode</value>
-</property>
+jav_path=$"export JAVA_HOME=~/opt/jdk1.8.0_221"
+sed -i "25s@.*@${jav_path}@" hadoop-env.sh
 
-<property>
-  <name>dfs.data.dir</name>
-    <value>file:///home/fieldemployee/opt/hadoop-2.7.3/hdfs/datanode</value>
-</property>
-</configuration>" >> hdfs-site.xml
-
-## Edit mapred-site.xml
-sudo gedit mapred-site.xml
-echo "<configuration>
- <property>
-  <name>mapreduce.framework.name</name>
-   <value>yarn</value>
- </property>
-</configuration>" >> mapred-site.xml
-
-## Edit yarn-site.xml
-sudo gedit yarn-site.xml
-echo "<configuration>
- <property>
-  <name>yarn.nodemanager.aux-services</name>
-    <value>mapreduce_shuffle</value>
- </property>
-</configuration>" >> yarn-site.xml
-
-## Format HDFS Namenode
-hdfs namenode -format
+echo '<configuration> 
+		<property> 
+			<name>fs.default.name</name> 
+			<value>hdfs://localhost:9000</value> 
+		</property> 
+	</configuration>' >> core-site.xml
 
 
-## Start Hadoop Cluster
-cd $HADOOP_HOME/sbin/
-./start-dfs.sh
+echo '<configuration>
+		<property>
+			<name>dfs.replication</name>
+			<value>1</value>
+		</property>
+		<property>
+			<name>dfs.name.dir</name>
+			<value>file:///~/opt/hadoop-2.7.3/hdfs/namenode</value>
+		</property>
+		<property>
+			<name>dfs.name.dir</name>
+			<value>file:///~/opt/hadoop-2.7.3/hdfs/datanode</value>
+		</property>
+	</configuration> ' >> hdfs-site.xml
 
-## Run start-hdfs.sh
-./start-hdfs.sh
 
-## Run start-yarn.sh starts Resource and Node manager
-./start-yarn.sh
+echo '<configuration>
+	<property>
+		<name>yarn.nodemanager.aux-services</name>
+		<value>mapreduce_shuffle</value>
+	</property>
+</configuration>' >> yarn-site.xml
 
 
-## To upload a file from the home directory into HDFS
-hdfs dfs -put "filename" /"destination directory"
+cp mapred-site.xml.template mapred-site.xml
 
-## To confirm file upload
-hdfs dfs -ls /"destination directory"
+echo '<configuration>
+		<property>
+			<name>mapreduce.framework.name</name>
+			<value>yarn</value>
+		</property>
+</configuration>' >> mapred-site.xml
 
+cd ~
+
+#permissions
+chmod 777 opt
+cd opt
+chmod 777 hadoop-2.7.3
+
+# The HDFS
+cd hadoop-2.7.3
+mkdir hdfs
+cd hdfs 
+mkdir datanode
+mkdir namenode
+
+#go back to your home directory
+cd ~
+
+#Source
+source .bash_profile
 
