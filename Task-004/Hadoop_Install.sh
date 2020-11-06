@@ -1,26 +1,18 @@
 #!/bin/bash
 
-#Go to the Home Directory
+
 cd ~
 
 sudo apt-get update 
-
-#Install and setup SSH key
 sudo apt-get install openssh-server
 ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 0600 ~/.ssh/authorized_keys
-
-#create the opt 
 mkdir -p opt
 cd opt
-
-#Download and then unpack
 sudo wget http://archive.apache.org/dist/hadoop/common/hadoop-2.7.3/hadoop-2.7.3.tar.gz
 tar -xzf hadoop-2.7.3.tar.gz
 sudo rm hadoop-2.7.3.tar.gz
-
-#setup the.Bash_Profile paths; if statment used to check the condition 
 cd ~
 if [ ! -f ".bash_profile" ]; then
 	touch .bash_profile
@@ -35,8 +27,6 @@ echo export YARN_HOME=$HADOOP_HOME >> .bash_profile
 echo export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native >> .bash_profile
 echo export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin >> .bash_profile
 
-
-# Setup Config Files
 cd ~/opt/hadoop-2.7.3/etc/hadoop
 
 jav_path=$"export JAVA_HOME=~/opt/jdk1.8.0_221"
@@ -85,21 +75,15 @@ echo '<configuration>
 
 cd ~
 
-#permissions
 chmod 777 opt
 cd opt
 chmod 777 hadoop-2.7.3
 
-# The HDFS
 cd hadoop-2.7.3
 mkdir hdfs
 cd hdfs 
 mkdir datanode
 mkdir namenode
-
-#go back to your home directory
 cd ~
-
-#Source
 source .bash_profile
 
