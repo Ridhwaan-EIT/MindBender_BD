@@ -1,49 +1,35 @@
-from pyspark.streaming.kafka import KafkaUtils
-from pyspark.streaming import StreamingContext
 from pyspark import SparkContext
+from pyspark.streaming import StreamingContext
+from pyspark.streaming.kafka import KafkaUtils
 from pyspark.sql import SparkSession
-from pyspark import sql
-from pyspark.sql import SQLContext
-from pyspark.sql import types
 import json
-import csv
-from json import loads
-from flatten_json import flatten
-from time import sleep
-import pandas as pd
 
-
-print("PROGRAM START!!!")
-print("PROGRAM START!!!")
-print("PROGRAM START!!!")
-print("PROGRAM START!!!")
-
-sc= SparkContext()
-ssc = StreamingContext(sc, 10)
-sqlc= SQLContext(sc)
-directKafkaStream = KafkaUtils.createDirectStream(ssc, ["kafka_spark"], {"metadata.broker.list": "localhost:9094"})
-lines= directKafkaStream.map(lambda x: x[1])
-
-print("LINES START!!!")
-print("LINES START!!!")
-print("LINES START!!!")
-print("LINES START!!!")
-
-def transformer(rdd):
-	my_obj= json.loads(rdd)
-	return (my_obj["group"]["id"],my_obj["group"]["name"],my_obj["group"]["latest"]["text"],my_obj["group"]["members"],my_obj["group"]["unread_count"])
-transform= lines.map(transformer)
-
-
-def build_df(rdd):
+def Process(rdd):
 	if not rdd.isEmpty():
-		global sqlc
-		df= sqlc.createDataFrame(rdd, schema= ["group_id","group_name","group_tasks","members","unread_count"])
+		global ss 
+		#lines = filtered.foreachRDD(lambda rdd: rdd.toDF())
+		df = ss.createDataFrame(rdd , schema=["id", "text"])
 		df.show()
 
-transform.foreachRDD(build_df)
+sc = SparkContext("local[*]", "TwitterData")
+ssc = StreamingContext(sc, 10)
 
+ss = SparkSession.builder.enableHiveSupport().getOrCreate()
+
+kafkastream = KafkaUtils.createStream(ssc, "localhost:2181","tweets", {"tweets": 1})
+
+parsed = kafkastream.map(lambda x: json.loads(x[1]))
+
+filtered = parsed.filter(lambda x: x.get("lang") == "en").map(lambda x: (x.get("id"), x.get("text")))
+
+#filtered2 = parsed.flatmap(lambda x: (x.get("friends_count"), x.get("screen_name")))
+#filtered2.pprint()
+
+parsed.count().map(lambda x:'Tweets in this batch: %s' % x).pprint()
+
+filtered.foreachRDD(Process)
 
 ssc.start()
 ssc.awaitTermination()
+
 
