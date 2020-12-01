@@ -1,7 +1,7 @@
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext
 from pyspark.streaming.kafka import KafkaUtils
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, HiveContext
 from pyspark.sql.functions import col
 import json
 
@@ -38,7 +38,7 @@ content = parsed.map(lambda x: x.get("content")) \
 	x.get("city"), x.get("conference"), x.get("division"), 
 	x.get("full_name"), x.get("name")))
 
-filtered.foreachRDD(Process)
+content.foreachRDD(Process)
 
 
 ## Create a new DF based on NBA teams in the Southwest Division
