@@ -11,6 +11,7 @@ def makeQuery():
 
 	headers = {
 	    'x-rapidapi-key': "3e2a3c832dmsh1cf38aaf2544186p1d3d68jsn337e112c9dfd",
+	    #'x-rapidapi-key': api_key,
 	    'x-rapidapi-host': "free-nba.p.rapidapi.com"
 	    }
 
@@ -27,4 +28,3 @@ kafka = KafkaClient("localhost:9099")
 producer = SimpleProducer(kafka)
 
 producer.send_messages(TOPIC, resp.encode('utf-8'))
-
